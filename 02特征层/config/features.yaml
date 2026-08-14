@@ -1,0 +1,34 @@
+project:
+  output_root: 02特征层/data
+  annualization_days: 252
+
+sources:
+  trade_calendar: 01数据/data/raw/trade_cal.parquet
+  availability: 01数据/data/processed/data_availability.parquet
+  target: 01数据/data/raw/layer1_target/000852.SH.parquet
+  shibor: 01数据/data/raw/layer2_macro_cross_asset/shibor.parquet
+  margin: 01数据/data/raw/layer2_macro_cross_asset/margin.parquet
+  pmi: 01数据/data/raw/layer2_macro_cross_asset/pmi.parquet
+  cpi: 01数据/data/raw/layer2_macro_cross_asset/cpi.parquet
+  fx: 01数据/data/raw/layer2_macro_cross_asset/USDCNH.FXCM.parquet
+  gold: 01数据/data/raw/layer2_macro_cross_asset/Au99.99.parquet
+  csi300: 01数据/data/raw/layer3_market_structure/000300.SH.parquet
+  csi500: 01数据/data/raw/layer3_market_structure/000905.SH.parquet
+  csi_all: 01数据/data/raw/layer3_market_structure/000985.CSI.parquet
+  spx: 01数据/data/raw/layer3_market_structure/SPX.parquet
+  ixic: 01数据/data/raw/layer3_market_structure/IXIC.parquet
+
+staleness_trade_days:
+  index:000852.SH: 2
+  index:000300.SH: 2
+  index:000905.SH: 2
+  index:000985.CSI: 2
+  shibor: 5
+  margin: 5
+  pmi: 35
+  cpi: 35
+  fx: 10
+  gold: 10
+  global_index:SPX: 10
+  global_index:IXIC: 10
+

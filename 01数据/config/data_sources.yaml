@@ -1,0 +1,87 @@
+project:
+  start_date: "20100101"
+  timezone: Asia/Shanghai
+  data_root: data
+
+tushare:
+  request_interval_sec: 0.15
+  max_retries: 3
+  retry_sleep_sec: 2.0
+  token_file: tushare_token.txt
+  # 只读取截面仓库已有 token，不复制、不写回。
+  fallback_token_file: ../截面多因子模型/01数据/tushare_token.txt
+
+# 第一层：主指数自身状态
+layer1_target:
+  index:
+    name: 中证1000
+    ts_code: 000852.SH
+    start_date: "20100101"
+
+# 第二层：资金、宏观与跨资产
+layer2_macro_cross_asset:
+  shibor:
+    enabled: true
+    start_date: "20100101"
+    tenor: 1m
+  margin:
+    enabled: true
+    start_date: "20100101"
+  pmi:
+    enabled: true
+    field: PMI010000
+  cpi:
+    enabled: true
+    field: nt_yoy
+  fx:
+    enabled: true
+    name: 美元兑离岸人民币
+    ts_code: USDCNH.FXCM
+    start_date: "20120201"
+  gold:
+    enabled: true
+    name: 上海金
+    ts_code: Au99.99
+    start_date: "20100101"
+
+# 第三层：市场结构与海外风险偏好
+layer3_market_structure:
+  domestic_indices:
+    - name: 沪深300
+      ts_code: 000300.SH
+    - name: 中证500
+      ts_code: 000905.SH
+    - name: 中证全指
+      ts_code: 000985.CSI
+  global_indices:
+    - name: 标普500
+      ts_code: SPX
+      start_date: "20100101"
+    - name: 纳斯达克综合指数
+      ts_code: IXIC
+      start_date: "20100101"
+
+# 可用时点规则。日频跨市场数据保守映射到其日期之后的首个中国交易日。
+availability:
+  domestic_index:
+    lag_trade_days: 0
+    note: T日收盘行情可用于T日收盘后信号
+  shibor:
+    lag_trade_days: 0
+    note: 日间发布，T日收盘后可用
+  margin:
+    lag_trade_days: 1
+    note: T日两融汇总从T+1交易日开始使用
+  global_index:
+    strictly_after_data_date: true
+    note: 中国T日收盘时美国T日尚未收盘，保守使用此前已完成行情
+  fx:
+    strictly_after_data_date: true
+    note: 外汇接口采用GMT日期，保守从日期后的首个中国交易日使用
+  gold:
+    strictly_after_data_date: true
+    note: 上海金完整日盘晚于A股收盘，保守从下一中国交易日使用
+  pmi:
+    note: 统计期下一自然月的最后一个中国交易日开始使用
+  cpi:
+    note: 统计期下一自然月的最后一个中国交易日开始使用

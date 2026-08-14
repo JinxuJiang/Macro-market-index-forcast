@@ -1,0 +1,4 @@
+fit_intercept: true
+alpha_candidates: [0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]
+tie_break: larger_alpha
+prediction_clipping: null

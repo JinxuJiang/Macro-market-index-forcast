@@ -1,0 +1,27 @@
+framework: tensorflow
+sequence_length: 60
+trials_per_fold: 12
+seeds: [42, 2026]
+
+fixed:
+  batch_size: 32
+  max_epochs: 150
+  patience: 12
+  min_delta: 0.00001
+  huber_delta: 0.05
+  bidirectional: false
+  stateful: false
+
+search_space:
+  cnn_filters: [16, 32]
+  kernel_size: [3, 5]
+  gru_hidden_size: [16, 32, 64]
+  dropout: [0.0, 0.1, 0.2]
+  learning_rate:
+    low: 0.0003
+    high: 0.003
+    log: true
+
+optuna:
+  sampler: TPE
+  pruner: none

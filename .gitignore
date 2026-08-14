@@ -1,0 +1,14 @@
+01数据/data/
+01数据/tushare_token.txt
+02特征层/data/
+03模型训练层/data/
+03模型训练层/experiments/
+04经济意义与回测层/data/
+04经济意义与回测层/reports/
+tmp/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+tests/test.ipynb
+时序模型/

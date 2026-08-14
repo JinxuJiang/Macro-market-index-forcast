@@ -1,0 +1,41 @@
+data:
+  feature_table: ../02特征层/data/processed/feature_table.parquet
+  target_price: ../01数据/data/raw/layer1_target/000852.SH.parquet
+  model_sample_start: 2012-03-19
+
+label:
+  name: target_20d_o2o
+  entry_offset: 1
+  exit_offset: 21
+
+walk_forward:
+  first_prediction_quarter: 2018Q2
+  validation_days: 252
+  model_update: quarterly
+  window: expanding
+
+preprocessing:
+  imputation: median
+  winsor_lower: 0.01
+  winsor_upper: 0.99
+  standardize: true
+
+evaluation:
+  huber_delta: 0.05
+  metrics:
+    - r2
+    - huber_loss
+    - direction_accuracy
+
+prediction_smoothing:
+  enabled: true
+  method: ewm
+  halflife_days: 10
+  adjust: false
+  min_periods: 1
+  calibration_period: 2018Q2-2021Q4
+  calibration_basis: forecast_effectiveness_decay
+
+output:
+  data_dir: data
+  experiments_dir: experiments

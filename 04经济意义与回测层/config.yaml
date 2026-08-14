@@ -1,0 +1,24 @@
+data:
+  target_price: ../01数据/data/raw/layer1_target/000852.SH.parquet
+  predictions:
+    ridge: ../03模型训练层/experiments/ridge/oos_predictions_smoothed.parquet
+    cnn_gru: ../03模型训练层/experiments/cnn_gru/oos_predictions_smoothed.parquet
+  prediction_variant: ewm_halflife_10d
+
+backtest:
+  start_date: 2023-10-01
+  end_date: 2026-08-03
+  initial_cash: 1000000.0
+  target_exposure: 0.90
+  neutral_exposure: 0.45
+  commission: 0.002
+  rebalance_frequency: monthly_first_trading_day
+  signal_threshold: 0.0
+  state_z_threshold: 0.5
+  standardization_window: 252
+  annualization_days: 252
+  risk_free_rate: 0.0
+
+output:
+  data_dir: data
+  reports_dir: reports
