@@ -34,18 +34,23 @@ def main() -> int:
     args = parser.parse_args()
     config = load_yaml(Path(args.config))
     price = load_price(resolve_layer_path(config["data"]["target_price"]))
-    price = slice_backtest_period(price, config["backtest"])
     predictions = {
         model: load_predictions(resolve_layer_path(path), model)
         for model, path in config["data"]["predictions"].items()
     }
+    shared_prediction_dates = common_prediction_dates(predictions)
+    price = slice_backtest_period(
+        price,
+        config["backtest"],
+        default_end_date=shared_prediction_dates.max(),
+    )
     expected_signals = build_signal_dates(
-        common_prediction_dates(predictions),
+        shared_prediction_dates,
         price.index,
         str(config["backtest"]["rebalance_frequency"]),
     )
     expected_decisions = build_decision_dates(
-        common_prediction_dates(predictions),
+        shared_prediction_dates,
         price.index,
         str(config["backtest"]["rebalance_frequency"]),
     )

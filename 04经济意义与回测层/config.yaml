@@ -7,12 +7,12 @@ data:
 
 backtest:
   start_date: 2023-10-01
-  end_date: 2026-08-03
+  end_date: ""
   initial_cash: 1000000.0
   target_exposure: 0.90
   neutral_exposure: 0.45
   commission: 0.002
-  rebalance_frequency: monthly_first_trading_day
+  rebalance_frequency: weekly_last_trading_day
   signal_threshold: 0.0
   state_z_threshold: 0.5
   standardization_window: 252

@@ -87,6 +87,11 @@ def write_html_report(results, benchmark, chart_path: Path, output_path: Path, c
         "这些结果只描述当前样本外预测在既定交易规则下的历史表现。"
     )
     bt = config["backtest"]
+    frequency_label = {
+        "monthly_first_trading_day": "每月首个交易日收盘后读取预测",
+        "weekly_first_trading_day": "每周首个交易日收盘后读取预测",
+        "weekly_last_trading_day": "每周最后一个交易日收盘后读取预测",
+    }.get(str(bt["rebalance_frequency"]), str(bt["rebalance_frequency"]))
     report_html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -139,7 +144,7 @@ def write_html_report(results, benchmark, chart_path: Path, output_path: Path, c
     <figcaption>所有曲线以共同回测起点归一化为 1；指数曲线为直接持有中证1000的同期对照。</figcaption></figure>
   <h2>回测设置</h2>
   <div class="settings">
-    <div><b>信号：</b>每月首个交易日收盘后读取预测</div><div><b>预测版本：</b>{escape(str(config['data'].get('prediction_variant', 'raw')))}</div>
+    <div><b>信号：</b>{escape(frequency_label)}</div><div><b>预测版本：</b>{escape(str(config['data'].get('prediction_variant', 'raw')))}</div>
     <div><b>成交：</b>下一交易日开盘价</div>
     <div><b>状态：</b>过去{int(bt['standardization_window'])}日预测标准化，阈值 ±{float(bt['state_z_threshold']):g}</div>
     <div><b>仓位：</b>熊市 0%｜震荡 {float(bt['neutral_exposure']):.0%}｜牛市 {float(bt['target_exposure']):.0%}</div>
@@ -161,12 +166,16 @@ def main() -> int:
 
     config = load_yaml(Path(args.config))
     price = load_price(resolve_layer_path(config["data"]["target_price"]))
-    price = slice_backtest_period(price, config["backtest"])
     all_predictions = {
         model: load_predictions(resolve_layer_path(path), model)
         for model, path in config["data"]["predictions"].items()
     }
     common_dates = common_prediction_dates(all_predictions)
+    price = slice_backtest_period(
+        price,
+        config["backtest"],
+        default_end_date=common_dates.max(),
+    )
     decision_dates = build_decision_dates(
         common_dates,
         price.index,

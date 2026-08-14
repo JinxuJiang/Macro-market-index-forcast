@@ -43,10 +43,20 @@ def load_price(path: Path) -> pd.DataFrame:
     return frame.set_index("date")[["open", "high", "low", "close", "vol"]]
 
 
-def slice_backtest_period(price: pd.DataFrame, config: dict) -> pd.DataFrame:
+def slice_backtest_period(
+    price: pd.DataFrame,
+    config: dict,
+    default_end_date: pd.Timestamp | None = None,
+) -> pd.DataFrame:
     """按正式回测配置截取行情；配置日期为日历边界。"""
     start = pd.Timestamp(config["start_date"])
-    end = pd.Timestamp(config["end_date"])
+    configured_end = config.get("end_date")
+    end = (
+        pd.Timestamp(configured_end)
+        if configured_end
+        else pd.Timestamp(default_end_date if default_end_date is not None else price.index.max())
+    )
+    end = min(end, pd.Timestamp(price.index.max()))
     if end < start:
         raise ValueError("backtest.end_date不能早于start_date")
     result = price.loc[start:end].copy()
@@ -87,11 +97,24 @@ def build_signal_dates(
     prediction_dates = pd.DatetimeIndex(sorted(pd.to_datetime(list(prediction_dates))))
     price_dates = pd.DatetimeIndex(price_dates)
     available = prediction_dates[prediction_dates.isin(price_dates)]
-    if frequency != "monthly_first_trading_day":
+    if frequency == "monthly_first_trading_day":
+        schedule_period = available.to_period("M")
+    elif frequency == "weekly_first_trading_day":
+        schedule_period = available.to_period("W-SUN")
+    elif frequency == "weekly_last_trading_day":
+        schedule_period = available.to_period("W-SUN")
+    else:
         raise ValueError(f"不支持的调仓频率: {frequency}")
     schedule_frame = pd.DataFrame({"signal_date": available})
-    schedule_frame["month"] = schedule_frame["signal_date"].dt.to_period("M")
-    scheduled = pd.DatetimeIndex(schedule_frame.groupby("month", sort=True)["signal_date"].first())
+    schedule_frame["schedule_period"] = schedule_period
+    grouped = schedule_frame.groupby("schedule_period", sort=True)["signal_date"]
+    scheduled = pd.DatetimeIndex(
+        grouped.last() if frequency == "weekly_last_trading_day" else grouped.first()
+    )
+    if frequency == "weekly_last_trading_day" and len(scheduled):
+        latest_period = schedule_period.max()
+        completed = (scheduled.to_period("W-SUN") < latest_period) | (scheduled.weekday == 4)
+        scheduled = scheduled[completed]
     result = []
     for date in scheduled:
         position = price_dates.searchsorted(date, side="right")
@@ -110,11 +133,28 @@ def build_decision_dates(
     """生成信号决策日；不要求T+1行情已经到达。"""
     prediction_dates = pd.DatetimeIndex(sorted(pd.to_datetime(list(prediction_dates))))
     available = prediction_dates[prediction_dates.isin(pd.DatetimeIndex(price_dates))]
-    if frequency != "monthly_first_trading_day":
+    if frequency == "monthly_first_trading_day":
+        schedule_period = available.to_period("M")
+    elif frequency == "weekly_first_trading_day":
+        schedule_period = available.to_period("W-SUN")
+    elif frequency == "weekly_last_trading_day":
+        schedule_period = available.to_period("W-SUN")
+    else:
         raise ValueError(f"不支持的调仓频率: {frequency}")
     schedule = pd.DataFrame({"signal_date": available})
-    schedule["month"] = schedule["signal_date"].dt.to_period("M")
-    return [pd.Timestamp(value) for value in schedule.groupby("month", sort=True)["signal_date"].first()]
+    schedule["schedule_period"] = schedule_period
+    grouped = schedule.groupby("schedule_period", sort=True)["signal_date"]
+    scheduled = pd.DatetimeIndex(
+        grouped.last() if frequency == "weekly_last_trading_day" else grouped.first()
+    )
+    if frequency == "weekly_last_trading_day" and len(scheduled):
+        latest_period = schedule_period.max()
+        completed = (scheduled.to_period("W-SUN") < latest_period) | (scheduled.weekday == 4)
+        scheduled = scheduled[completed]
+    return [
+        pd.Timestamp(value)
+        for value in scheduled
+    ]
 
 
 def build_rebalance_plan(
